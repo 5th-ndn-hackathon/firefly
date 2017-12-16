@@ -32,7 +32,8 @@ var ChronoChat = function(screenName, chatRoom, hubPrefix, face, keyChain, certi
   this.chat_prefix = (new Name(hubPrefix)).append(this.chatroom)
     .append(this.getRandomString());
 
-  this.roster = [];
+  this.roster = [screenName];
+  document.getElementById('menu').innerHTML = '<p><b>Member</b></p><ul><li>' + screenName + '</li></ul>';
   this.msgcache = [];
 
   //console.log("The local chat prefix " + this.chat_prefix.toUri() + " ***");
@@ -119,7 +120,7 @@ ChronoChat.prototype.initial = function()
     document.getElementById('menu').innerHTML += '<ul><li>' + this.screen_name +
       '</li></ul>';
     var d = new Date();
-    document.getElementById('txt').innerHTML += '<div><b><grey>' + 
+    document.getElementById('txt').innerHTML += '<div><b><grey>' +
       this.screen_name + '-' + d.toLocaleTimeString() +
       ': Join</grey></b><br /></div>'
     var objDiv = document.getElementById("txt");
@@ -175,7 +176,7 @@ ChronoChat.prototype.sendInterest = function(syncStates, isRecovery)
       }
     }
   }
-  
+
   for (var i = 0; i < sendList.length; ++i) {
     var uri = sendList[i] + "/" + sessionNoList[i] + "/" + sequenceNoList[i];
     var interest = new Interest(new Name(uri));
