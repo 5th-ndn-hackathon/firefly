@@ -20,27 +20,31 @@
 /**
  * FireflyFace extends Face to override expressInterest, registerPrefix and
  * putData to interface with Google Firestore.
+ * @param {firebase.firestore.Firestore} (optional) The Firestore object which
+ * is already created. If omitted, use the default "ndn-firefly" project.
  */
-var FireflyFace = function FireflyFace()
+var FireflyFace = function FireflyFace(db)
 {
   // Call the base constructor.
   // Make Face.reconnectAndExpressInterest call expressInterestHelper directly.
   Face.call(new Transport(), { equals: function() { return true; } });
   this.readyStatus = Face.OPENED;
 
-  // Initialize Firebase
-  var config = {
-    apiKey: "AIzaSyCDa5xAuQw78RwcpIDT0NmgmcJ9WVL60GY",
-    authDomain: "ndn-firefly.firebaseapp.com",
-    databaseURL: "https://ndn-firefly.firebaseio.com",
-    projectId: "ndn-firefly",
-    storageBucket: "",
-    messagingSenderId: "225388759140"
-  };
-  firebase.initializeApp(config);
+  if (db == undefined) {
+    var config = {
+      apiKey: "AIzaSyCDa5xAuQw78RwcpIDT0NmgmcJ9WVL60GY",
+      authDomain: "ndn-firefly.firebaseapp.com",
+      databaseURL: "https://ndn-firefly.firebaseio.com",
+      projectId: "ndn-firefly",
+      storageBucket: "",
+      messagingSenderId: "225388759140"
+    };
+    firebase.initializeApp(config);
 
-  this.db_ = firebase.firestore();
+    db = firebase.firestore();
+  }
 
+  this.db_ = db;
 };
 
 FireflyFace.prototype = new Face(new Transport(), { equals: function() { return true; } });
