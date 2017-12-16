@@ -22,7 +22,7 @@ var ChronoChat = function(screenName, chatRoom, hubPrefix, face, keyChain, certi
 {
   this.screen_name = screenName;
   this.chatroom = chatRoom;
-  this.maxmsgcachelength = 100;
+  this.maxmsgcachelength = 10000;
   this.isRecoverySyncState = true;
   this.sync_lifetime = 5000.0;
   this.face = face;
@@ -32,9 +32,11 @@ var ChronoChat = function(screenName, chatRoom, hubPrefix, face, keyChain, certi
   this.chat_prefix = (new Name(hubPrefix)).append(this.chatroom)
     .append(this.getRandomString());
 
-  this.roster = [screenName];
+  /*this.roster = [screenName];
   document.getElementById('menu').innerHTML = '<p><b>Member</b></p><ul><li>' + screenName + '</li></ul>';
-  this.msgcache = [];
+  this.msgcache = [];*/
+  this.roster = [];
+  this.initial();
 
   //console.log("The local chat prefix " + this.chat_prefix.toUri() + " ***");
 
@@ -108,10 +110,11 @@ ChronoChat.prototype.onRegisterFailed = function(prefix)
 
 ChronoChat.prototype.initial = function()
 {
-  var timeout = new Interest(new Name("/timeout"));
+  /*var timeout = new Interest(new Name("/timeout"));
   timeout.setInterestLifetimeMilliseconds(60000);
 
-  this.face.expressInterest(timeout, this.dummyOnData, this.heartbeat.bind(this));
+  //TODO: figure out how to do the heartbeat
+  this.face.expressInterest(timeout, this.dummyOnData, this.heartbeat.bind(this));*/
 
   if (this.roster.indexOf(this.usrname) == -1) {
     this.roster.push(this.usrname);
