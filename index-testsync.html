@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+<head>
+<title>Test</title>
+</head>
+<body>
+
+<script src="https://www.gstatic.com/firebasejs/4.8.0/firebase.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-firestore.js"></script>
+<script src="./firefly-sync.js"></script>
+
+<script>
+// Initialize Firebase
+var config = {
+  apiKey: "AIzaSyCDa5xAuQw78RwcpIDT0NmgmcJ9WVL60GY",
+  authDomain: "ndn-firefly.firebaseapp.com",
+  databaseURL: "https://ndn-firefly.firebaseio.com",
+  projectId: "ndn-firefly",
+  storageBucket: "",
+  messagingSenderId: "225388759140"
+};
+firebase.initializeApp(config);
+
+var db = firebase.firestore();
+
+console.log("Firestore loaded.");
+
+var syncDoc = "/fireflysync/fireflychat-test";
+
+function makeid() {
+  var text = "";
+  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+  for (var i = 0; i < 5; i++)
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+  return text;
+}
+
+var appPrefix = "/ndn/"+makeid()+"/chat/hackathon";
+
+var sync = new FireflySync(db, 
+  syncDoc, 
+  appPrefix, 
+  function(syncStates){
+    console.log(" > firefly-sync: got new sync states: ", syncStates);
+  });
+
+// publish new message
+var iter = 0;
+
+function loop(){
+  setTimeout(function(){
+    var seqNo = sync.publishNextSequenceNo();
+
+    // publish message here
+    console.log("published message ", seqNo);
+
+    iter++;
+    if (iter < 5) loop();
+  }, 1000);
+}
+
+loop();
+
+</script>
+
+</body>
+</html>
