@@ -43,6 +43,7 @@ var ChronoChat = function(screenName, chatRoom, hubPrefix, face, keyChain, certi
   this.usrname = this.screen_name + session;
   this.ChatMessage = SyncDemo.ChatMessage;
 
+/* Not using ChronoSync2013.
   if (this.screen_name == "" || this.chatroom == "") {
     console.log("input usrname and chatroom");
   }
@@ -56,6 +57,7 @@ var ChronoChat = function(screenName, chatRoom, hubPrefix, face, keyChain, certi
       (this.chat_prefix, this.onInterest.bind(this),
        this.onRegisterFailed.bind(this));
   }
+*/
 };
 
 /**
@@ -233,9 +235,11 @@ ChronoChat.prototype.onData = function(interest, co)
       }
       document.getElementById('menu').innerHTML += '</ul>';
     }
+    /* TODO: Restore heartbeat functionality.
     var timeout = new Interest(new Name("/timeout"));
     timeout.setInterestLifetimeMilliseconds(120000);
     this.face.expressInterest(timeout, this.dummyOnData, this.alive.bind(this, timeout, seqno, name, session, prefix));
+    */
 
     //if (content.type == 0 && this.isRecoverySyncState == false && content.from != this.screen_name){
       // Note: the original logic does not display old data;
@@ -285,6 +289,7 @@ ChronoChat.prototype.chatTimeout = function(interest)
  *
  * @param {Interest}
  */
+/* TODO: Restore heartbeat functionality.
 ChronoChat.prototype.heartbeat = function(interest)
 {
   // Based on ndn-cpp library approach
@@ -302,6 +307,7 @@ ChronoChat.prototype.heartbeat = function(interest)
   //console.log("*** Chat heartbeat expressed interest with name: " + timeout.getName().toUri() + " ***");
   this.face.expressInterest(timeout, this.dummyOnData, this.heartbeat.bind(this));
 };
+*/
 
 /**
  * This is called after a timeout to check if the user with prefix has a newer sequence
@@ -315,6 +321,7 @@ ChronoChat.prototype.heartbeat = function(interest)
  * @param {int}
  * @param {string}
  */
+/* TODO: Restore heartbeat functionality.
 ChronoChat.prototype.alive = function(interest, temp_seq, name, session, prefix)
 {
   //console.log("check alive");
@@ -342,6 +349,7 @@ ChronoChat.prototype.alive = function(interest, temp_seq, name, session, prefix)
     }
   }
 };
+*/
 
 ChronoChat.prototype.sendMessage = function()
 {
@@ -351,8 +359,10 @@ ChronoChat.prototype.sendMessage = function()
   var chatmsg = document.getElementById('fname').value.trim();
   if (chatmsg != "") {
     document.getElementById('fname').value = "";
-    
+
+    /* TODO: Replace publishNextSequenceNo with Firestore update.
     this.sync.publishNextSequenceNo();
+    */
     this.messageCacheAppend("CHAT", chatmsg);
 
     var d = new Date();
@@ -377,7 +387,9 @@ ChronoChat.prototype.leave = function()
   $("#chat").hide();
   document.getElementById('room').innerHTML = 'Please close the window. Thank you';
 
+  /* TODO: Replace publishNextSequenceNo with Firestore update.
   this.sync.publishNextSequenceNo();
+  */
   this.messageCacheAppend("LEAVE", "xxx");
 };
 
@@ -392,7 +404,11 @@ ChronoChat.prototype.messageCacheAppend = function(messageType, message)
   var d = new Date();
   var t = d.getTime();
 
-  this.msgcache.push(new ChronoChat.CachedMessage(this.sync.usrseq, messageType, message, t));
+  /* TODO: Do we need usrseq?
+  var usrseq = this.sync.usrseq;
+   */
+  var usrseq = 0;
+  this.msgcache.push(new ChronoChat.CachedMessage(usrseq, messageType, message, t));
   while (this.msgcache.length > this.maxmsgcachelength) {
     this.msgcache.shift();
   }

@@ -34,7 +34,7 @@
     <script src="./Protobuf/long.min.js"></script>
     <script src="./Protobuf/bytebuffer-ab.min.js"></script>
     <script src="./Protobuf/protobuf.min.js"></script>
-    <script src="ndn.js"></script>
+    <script src="../../ndn.js"></script>
     <script src="chrono-chat.js"></script>
     <script src="chatbuf.js"></script>
     <script>
@@ -166,12 +166,7 @@ $(document).ready(function(){
     return;
   }
 
-  var face
-  if ($('input[name="face"]:checked').val() === "microForwarder")
-    face = new Face(microForwarderTransport,
-                    new MicroForwarderTransport.ConnectionInfo());
-  else
-    face = new Face({host: hostName});
+  var face = new Face({host: hostName});
 
   var identityStorage = new MemoryIdentityStorage();
   var privateKeyStorage = new MemoryPrivateKeyStorage();
