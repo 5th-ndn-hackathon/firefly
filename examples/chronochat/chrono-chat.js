@@ -33,10 +33,10 @@ var ChronoChat = function(screenName, chatRoom, hubPrefix, face, keyChain, certi
     .append(this.getRandomString());
 
   /*this.roster = [screenName];
-  document.getElementById('menu').innerHTML = '<p><b>Member</b></p><ul><li>' + screenName + '</li></ul>';
-  this.msgcache = [];*/
+  document.getElementById('menu').innerHTML = '<p><b>Member</b></p><ul><li>' + screenName + '</li></ul>';*/
+  this.msgcache = [];
   this.roster = [];
-  this.initial();
+  this.initial.bind(this)();
 
   //console.log("The local chat prefix " + this.chat_prefix.toUri() + " ***");
 
