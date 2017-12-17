@@ -29,10 +29,8 @@ var ChronoChat = function(screenName, chatRoom, rootPrefix, chat, face, syncDoc,
   this.keyChain = keyChain;
   this.certificateName = certificateName;
 
-  this.user_prefix = rootPrefix + '/' + screenName + chat + '/' + chatRoom;
-
   this.chat_prefix = (new Name(rootPrefix)).append(this.chatroom)
-    .append(this.getRandomString());
+    .append(screenName);
 
   /*this.roster = [screenName];
   document.getElementById('menu').innerHTML = '<p><b>Member</b></p><ul><li>' + screenName + '</li></ul>';*/
@@ -41,18 +39,19 @@ var ChronoChat = function(screenName, chatRoom, rootPrefix, chat, face, syncDoc,
 
   //console.log("The local chat prefix " + this.chat_prefix.toUri() + " ***");
 
+  /* TODO: Do we need session numbers?
   var session = (new Date()).getTime();
   session = parseInt(session/1000);
+  */
+  var session = 0;
 
   this.usrname = this.screen_name + session;
   this.ChatMessage = SyncDemo.ChatMessage;
 
-  this.sync = new FireflySync(db,
+  this.sync = new FireflySync(face.db_,
     syncDoc,
-    this.user_prefix,
-    function(syncStates){
-      console.log(" > firefly-sync: got new sync states: ", syncStates);
-    });
+    this.chat_prefix.toUri(),
+    this.sendInterest.bind(this));
   this.initial.bind(this)();
 
 /* Not using ChronoSync2013.
@@ -104,6 +103,7 @@ ChronoChat.prototype.onInterest = function
     co.setContent(str);
     this.keyChain.sign(co, this.certificateName, function() {
       try {
+        console.log("Debug onInterest calling putData " + co.getName().toUri());
         face.putData(co);
       }
       catch (e) {
@@ -398,9 +398,7 @@ ChronoChat.prototype.leave = function()
   $("#chat").hide();
   document.getElementById('room').innerHTML = 'Please close the window. Thank you';
 
-  /* TODO: Replace publishNextSequenceNo with Firestore update.
   this.sync.publishNextSequenceNo();
-  */
   this.messageCacheAppend("LEAVE", "xxx");
 };
 
@@ -421,6 +419,13 @@ ChronoChat.prototype.messageCacheAppend = function(messageType, message)
   while (this.msgcache.length > this.maxmsgcachelength) {
     this.msgcache.shift();
   }
+
+  // TODO: Remove this when FireflyFace.registerPrefix is implemented.
+  var name = new Name(this.chat_prefix.toUri() + "/0/" + this.sync.getSequenceNo());
+  console.log("Debug messageCacheAppend calling onInterest " + name.toUri());
+  for (var key in this.sync.syncData)
+    console.log("Debug syncData " + key);
+  this.onInterest(null, new Interest(name), this.face);
 };
 
 ChronoChat.prototype.getRandomString = function()
