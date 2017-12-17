@@ -71,18 +71,20 @@ var FireflySync = function FireflySync(firestoreDb, syncDoc, applicationPrefix, 
 				// update our seq no if needed
 				if (decodedKey == self.applicationDataPrefixUri && self.mySeqNo < syncData[key])
 					self.mySeqNo = syncData[key];
-				
+
 				self.syncData[decodedKey] = syncData[key];
 			}
 
 			if (Object.keys(delta).length)
 			{
+				// self.onReceivedSyncState(delta);
+				// this if for backward compatibnility with old ChronoChat code
+				// if you don't need this compatibility, use the line above
 				var syncStates = [];
 				for (var key in delta)
 				{
 					 syncStates.push(new ChronoSync2013.SyncState (key, 0, delta[key], new Blob()));
 				}
-				// self.onReceivedSyncState(delta);
 				self.onReceivedSyncState(syncStates);
 			}
 			else
