@@ -17,7 +17,7 @@
  * A copy of the GNU Lesser General Public License is in the file COPYING.
  */
 
-fireflySyncDebug = false; // toggle this to turn on / off for global controll
+fireflySyncDebug = true; // toggle this to turn on / off for global controll
 
 if (fireflySyncDebug) var debug = console.log.bind(window.console);
 else var debug = function(){};
@@ -33,13 +33,14 @@ else var debug = function(){};
  * @param onReceivedSyncState 	A callback (function({'prefix':<seq-no>})) which will be called
  *								whenever new updates (sequence numbres) are received.
  */
-var FireflySync = function FireflySync(firestoreDb, syncDoc, applicationPrefix, onReceivedSyncState){
+var FireflySync = function FireflySync(firestoreDb, syncDoc, applicationPrefix, onInitialized, onReceivedSyncState){
 	this.firestoreDb = firestoreDb;
 	this.onReceivedSyncState = onReceivedSyncState;
 	this.applicationDataPrefixUri = applicationPrefix;
 	this.syncDoc = syncDoc;
 	this.syncData = {};
 	this.mySeqNo = -1;
+	this.initialized = false;
 	var self = this;
 
 	this.firestoreDb.doc(this.syncDoc).onSnapshot(function(snapshot){
@@ -57,7 +58,7 @@ var FireflySync = function FireflySync(firestoreDb, syncDoc, applicationPrefix, 
 		}
 		else
 		{
-			// debug('> firefly-sync: received doc snapshot: ', snapshot.data());
+			debug('> firefly-sync: received doc snapshot: ', snapshot.data());
 
 			var delta = {}
 			var syncData = snapshot.data();
@@ -89,6 +90,12 @@ var FireflySync = function FireflySync(firestoreDb, syncDoc, applicationPrefix, 
 			}
 			else
 				debug('> firefly-sync: no sync updates');
+		}
+		
+		if (!self.initialized)
+		{
+			self.initialized = true
+			onInitialized();
 		}
 	}, 
 	function(err) {

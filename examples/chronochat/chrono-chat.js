@@ -51,7 +51,11 @@ var ChronoChat = function(screenName, chatRoom, rootPrefix, chat, face, syncDoc,
   this.sync = new FireflySync(face.db_,
     syncDoc,
     this.chat_prefix.toUri(),
+    function(){
+      console.log("sync initialized");
+    },
     this.sendInterest.bind(this));
+
   this.initial.bind(this)();
 
 /* Not using ChronoSync2013.
