@@ -91,7 +91,7 @@ var FireflySync = function FireflySync(firestoreDb, syncDoc, applicationPrefix, 
 			else
 				debug('> firefly-sync: no sync updates');
 		}
-		
+
 		if (!self.initialized)
 		{
 			self.initialized = true
@@ -110,6 +110,8 @@ var FireflySync = function FireflySync(firestoreDb, syncDoc, applicationPrefix, 
  */
 FireflySync.prototype.publishNextSequenceNo = function(){
 	this.mySeqNo++;
+	this.syncData[this.applicationDataPrefixUri] = this.mySeqNo;
+
 	var prefix = encodeURIComponent(this.applicationDataPrefixUri);
 	var self = this;
 
@@ -130,5 +132,5 @@ FireflySync.prototype.publishNextSequenceNo = function(){
  * Returns current sequence number
  */
 FireflySync.prototype.getSequenceNo = function(){
-	return this.syncData[this.applicationDataPrefixUri];
+	return this.mySeqNo;
 }
