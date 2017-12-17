@@ -49,27 +49,19 @@ var ChronoChat = function(screenName, chatRoom, rootPrefix, chat, face, syncDoc,
   this.usrname = this.screen_name + session;
   this.ChatMessage = SyncDemo.ChatMessage;
 
-  this.sync = new FireflySync(face.db_,
-    syncDoc,
-    this.chat_prefix.toUri(),
-    this.initial.bind(this),
-    this.sendInterest.bind(this));
-
-/* Not using ChronoSync2013.
   if (this.screen_name == "" || this.chatroom == "") {
     console.log("input usrname and chatroom");
   }
   else {
-    this.sync = new ChronoSync2013
-      (this.sendInterest.bind(this), this.initial.bind(this), this.chat_prefix,
-       (new Name("/ndn/broadcast/ChronoChat-0.3")).append(this.chatroom), session,
-        face, keyChain, certificateName, this.sync_lifetime,
-        this.onRegisterFailed.bind(this));
+    this.sync = new FireflySync(face.db_,
+      syncDoc,
+      this.chat_prefix.toUri(),
+      this.initial.bind(this),
+      this.sendInterest.bind(this));
     face.registerPrefix
       (this.chat_prefix, this.onInterest.bind(this),
        this.onRegisterFailed.bind(this));
   }
-*/
 };
 
 /**
@@ -460,10 +452,6 @@ ChronoChat.prototype.messageCacheAppend = function(messageType, message)
   while (this.msgcache.length > this.maxmsgcachelength) {
     this.msgcache.shift();
   }
-
-  // TODO: Remove this when FireflyFace.registerPrefix is implemented.
-  var name = new Name(this.chat_prefix.toUri() + "/0/" + this.sync.getSequenceNo());
-  this.onInterest(null, new Interest(name), this.face);
 };
 
 ChronoChat.prototype.getRandomString = function()
