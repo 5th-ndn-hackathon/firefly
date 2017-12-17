@@ -297,7 +297,8 @@ ChronoChat.prototype.onData = function(interest, co)
     //if (content.type == 0 && this.isRecoverySyncState == false && content.from != this.screen_name){
       // Note: the original logic does not display old data;
       // But what if an ordinary application data interest gets answered after entering recovery state?
-    if (content.type == 0 && content.from != this.screen_name){
+    if (content.type == 0) // && content.from != this.screen_name)
+    {
       // Display on the screen will not display old data.
       // Encode special html characters to avoid script injection.
       var escaped_msg = $('<div/>').text(content.data).html();
