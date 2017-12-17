@@ -30,6 +30,11 @@
 <link href='http://fonts.googleapis.com/css?family=Alegreya' rel='stylesheet' type='text/css'>
     <meta charset="utf-8">
 
+
+    <script src="https://www.gstatic.com/firebasejs/4.8.0/firebase.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-firestore.js"></script>
     <script src="./jquery-1.10.1.min.js"></script>
     <script src="./Protobuf/long.min.js"></script>
     <script src="./Protobuf/bytebuffer-ab.min.js"></script>
@@ -37,6 +42,8 @@
     <script src="../../ndn.js"></script>
     <script src="chrono-chat.js"></script>
     <script src="chatbuf.js"></script>
+    <script src="../../firefly-sync.js"></script>
+    <script src="../../js/firefly-face.js"></script>
     <script>
 var DEFAULT_RSA_PUBLIC_KEY_DER = new Buffer([
     0x30, 0x82, 0x01, 0x22, 0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01,
@@ -141,6 +148,21 @@ var DEFAULT_RSA_PRIVATE_KEY_DER = new Buffer([
 var chronoChat;
 //var microForwarderTransport;
 
+var config = {
+  apiKey: "AIzaSyCDa5xAuQw78RwcpIDT0NmgmcJ9WVL60GY",
+  authDomain: "ndn-firefly.firebaseapp.com",
+  databaseURL: "https://ndn-firefly.firebaseio.com",
+  projectId: "ndn-firefly",
+  storageBucket: "",
+  messagingSenderId: "225388759140"
+};
+firebase.initializeApp(config);
+var db = firebase.firestore();
+console.log("Firestore loaded.");
+var syncDoc = "/fireflysync/fireflychat";
+var rootPrefix = "/ndn";
+var chat = "/chat";
+
 $(document).ready(function(){
     $("#chat").hide();
     $("#microForwarder").hide();
@@ -166,7 +188,7 @@ $(document).ready(function(){
     return;
   }
 
-  var face = new Face({host: "127.0.0.1"});
+  var face = new FireflyFace(db);
 
   var identityStorage = new MemoryIdentityStorage();
   var privateKeyStorage = new MemoryPrivateKeyStorage();
@@ -193,7 +215,7 @@ $(document).ready(function(){
   document.getElementById('menu').innerHTML = '<p><b>Member</b></p>';
 
   chronoChat = new ChronoChat
-    (screenName, chatroom, hubPrefix, face, keyChain, certificateName);
+    (screenName, chatroom, hubPrefix, chat, face, syncDoc, keyChain, certificateName);
 
     });
 });
@@ -220,7 +242,7 @@ function checkKey(event) {
   <div id="info">
     username: <input type="text" id="name" value="Enter Name">
     <br /><br />
-    hub prefix: <input type="text" id="hubPrefix" value="ndn/edu/ucla/remap">
+    root prefix: <input type="text" id="hubPrefix" value="/ndn">
     <br /><br />
     chatroom: <input type="text" id="chatroom" value="ndnchat">
     <br /><br />

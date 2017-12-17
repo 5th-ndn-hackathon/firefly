@@ -27,7 +27,7 @@ var db = firebase.firestore();
 
 console.log("Firestore loaded.");
 
-var syncDoc = "/fireflysync/fireflychat-test";
+var syncDoc = "/fireflysync/fireflychat";
 
 function makeid() {
   var text = "";
@@ -41,9 +41,9 @@ function makeid() {
 
 var appPrefix = "/ndn/"+makeid()+"/chat/hackathon";
 
-var sync = new FireflySync(db, 
-  syncDoc, 
-  appPrefix, 
+var sync = new FireflySync(db,
+  syncDoc,
+  appPrefix,
   function(syncStates){
     console.log(" > firefly-sync: got new sync states: ", syncStates);
   });

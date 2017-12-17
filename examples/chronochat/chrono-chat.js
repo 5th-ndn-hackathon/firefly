@@ -18,7 +18,7 @@
  * A copy of the GNU Lesser General Public License is in the file COPYING.
  */
 
-var ChronoChat = function(screenName, chatRoom, hubPrefix, face, keyChain, certificateName)
+var ChronoChat = function(screenName, chatRoom, rootPrefix, chat, face, syncDoc, keyChain, certificateName)
 {
   this.screen_name = screenName;
   this.chatroom = chatRoom;
@@ -29,14 +29,15 @@ var ChronoChat = function(screenName, chatRoom, hubPrefix, face, keyChain, certi
   this.keyChain = keyChain;
   this.certificateName = certificateName;
 
-  this.chat_prefix = (new Name(hubPrefix)).append(this.chatroom)
+  this.user_prefix = rootPrefix + '/' + screenName + chat + '/' + chatRoom;
+
+  this.chat_prefix = (new Name(rootPrefix)).append(this.chatroom)
     .append(this.getRandomString());
 
   /*this.roster = [screenName];
   document.getElementById('menu').innerHTML = '<p><b>Member</b></p><ul><li>' + screenName + '</li></ul>';*/
   this.msgcache = [];
   this.roster = [];
-  this.initial.bind(this)();
 
   //console.log("The local chat prefix " + this.chat_prefix.toUri() + " ***");
 
@@ -45,6 +46,14 @@ var ChronoChat = function(screenName, chatRoom, hubPrefix, face, keyChain, certi
 
   this.usrname = this.screen_name + session;
   this.ChatMessage = SyncDemo.ChatMessage;
+
+  this.sync = new FireflySync(db,
+    syncDoc,
+    this.user_prefix,
+    function(syncStates){
+      console.log(" > firefly-sync: got new sync states: ", syncStates);
+    });
+  this.initial.bind(this)();
 
 /* Not using ChronoSync2013.
   if (this.screen_name == "" || this.chatroom == "") {
@@ -364,9 +373,7 @@ ChronoChat.prototype.sendMessage = function()
   if (chatmsg != "") {
     document.getElementById('fname').value = "";
 
-    /* TODO: Replace publishNextSequenceNo with Firestore update.
     this.sync.publishNextSequenceNo();
-    */
     this.messageCacheAppend("CHAT", chatmsg);
 
     var d = new Date();
@@ -408,10 +415,8 @@ ChronoChat.prototype.messageCacheAppend = function(messageType, message)
   var d = new Date();
   var t = d.getTime();
 
-  /* TODO: Do we need usrseq?
-  var usrseq = this.sync.usrseq;
-   */
-  var usrseq = 0;
+  var usrseq = this.sync.getSequenceNo();
+
   this.msgcache.push(new ChronoChat.CachedMessage(usrseq, messageType, message, t));
   while (this.msgcache.length > this.maxmsgcachelength) {
     this.msgcache.shift();
