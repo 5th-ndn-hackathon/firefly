@@ -105,3 +105,10 @@ FireflySync.prototype.publishNextSequenceNo = function(){
 
 	return this.mySeqNo;
 }
+
+/**
+ * Returns current sequence number
+ */
+FireflySync.prototype.getSequenceNo() = function(){
+	return this.syncData[this.applicationDataPrefixUri];
+}
