@@ -51,7 +51,7 @@ FireflyFace.prototype = new Face(new Transport(), { equals: function() { return 
 FireflyFace.prototype.name = "FireflyFace";
 
 /**
- * Override to do the work of expressInterest.
+ * Override to do the work of expressInterest using Firestore.
  */
 FireflyFace.prototype.expressInterestHelper = function
   (pendingInterestId, interest, onData, onTimeout, onNetworkNack, wireFormat)
@@ -69,7 +69,41 @@ FireflyFace.prototype.expressInterestHelper = function
   }).catch(function(error) {
     console.log("Error in expressInterest:", error);
   });
-  
+};
+
+/**
+ * Override to do the work of registerPrefix using Firestore.
+ */
+FireflyFace.prototype.nfdRegisterPrefix = function
+  (registeredPrefixId, prefix, onInterest, flags, onRegisterFailed,
+   onRegisterSuccess, commandKeyChain, commandCertificateName, wireFormat)
+{
+  console.log("Debug Register prefix");
+  // TODO: Implement.
+};
+
+/**
+ * The OnInterest callback calls this to put a Data packet which satisfies an
+ * Interest. Override to put the Data packet into Firestore.
+ * @param {Data} data The Data packet which satisfies the interest.
+ * @param {WireFormat} wireFormat (optional) A WireFormat object used to encode
+ * the Data packet. If omitted, use WireFormat.getDefaultWireFormat().
+ * @throws Error If the encoded Data packet size exceeds getMaxNdnPacketSize().
+ */
+FireflyFace.prototype.putData = function(data, wireFormat)
+{
+  wireFormat = (wireFormat || WireFormat.getDefaultWireFormat());
+
+  var encoding = data.wireEncode(wireFormat);
+  if (encoding.size() > Face.getMaxNdnPacketSize())
+    throw new Error
+      ("The encoded Data packet size exceeds the maximum limit getMaxNdnPacketSize()");
+
+  // TODO: Check if we can remove Interest fields in Firestore.
+  this.setDataPromise_(data)
+  .catch(function(error) {
+    console.log("Error in putData:", error);
+  });
 };
 
 /**
@@ -116,13 +150,15 @@ FireflyFace.toFirestorePath = function(name)
  * document based on data.getName(). If the freshnessPeriod is not specified,
  * this sets it to null. This replaces existing fields.
  * @param {Data} data The Data packet.
+ * @param {WireFormat} wireFormat A WireFormat object used to encode the Data
+ * packet.
  * @return {Promise} A promise that fulfills when the operation is complete.
  */
-FireflyFace.prototype.setDataPromise_ = function(data)
+FireflyFace.prototype.setDataPromise_ = function(data, wireFormat)
 {
   return this.db_.doc(FireflyFace.toFirestorePath(data.getName())).set({
     data: firebase.firestore.Blob.fromBase64String
-      (data.wireEncode().buf().toString('base64')),
+      (data.wireEncode(wireFormat).buf().toString('base64')),
     storeTime: firebase.firestore.FieldValue.serverTimestamp(),
     freshnessPeriod: data.getMetaInfo().getFreshnessPeriod()
   }, { merge: true });
