@@ -53,6 +53,7 @@ var FireflySync = function FireflySync(firestoreDb, syncDoc, applicationPrefix, 
 		{
 			debug('> firefly-sync: sync doc does not exist.',);
 			// self.createLockDoc();
+			self.checkCallOnInitialized();
 		}
 		else
 		{
@@ -76,59 +77,6 @@ var FireflySync = function FireflySync(firestoreDb, syncDoc, applicationPrefix, 
 	},function(error){
 		console.error('> firefly-sync: error getting collection '+syncDoc.syncId+': ', error);
 	})
-
-	// this.firestoreDb.doc(this.syncDoc).onSnapshot(function(snapshot){
-	// 	if (!snapshot.exists)
-	// 	{
-	// 		debug('> firefly-sync: sync doc does not exist.');
- //  			// setup empty document
- //  			self.firestoreDb.doc(self.syncDoc).set({})
- //  			.then(function(){
- //  				debug('> firefly-sync: new sync doc created');
- //  			})
- //  			.catch(function(error){
- //  				console.error('> firefly-sync: error creating sync doc: ', error);
- //  			});
-	// 	}
-	// 	else
-	// 	{
-	// 		debug('> firefly-sync: received doc snapshot: ', snapshot.data());
-
-	// 		var delta = {}
-	// 		var syncData = snapshot.data();
-	// 		for (var key in syncData)
-	// 		{
-	// 			var decodedKey = decodeURIComponent(key);
-	// 			var newValue = !(decodedKey in self.syncData) && decodedKey != self.applicationDataPrefixUri;
-	// 			if (!newValue) newValue = (syncData[key] > self.syncData[decodedKey]);
-	// 			if (newValue) delta[decodedKey] = syncData[key];
-
-	// 			// update our seq no if needed
-	// 			if (decodedKey == self.applicationDataPrefixUri && self.mySeqNo < syncData[key])
-	// 				self.mySeqNo = syncData[key];
-
-	// 			self.syncData[decodedKey] = syncData[key];
-	// 		}
-
-	// 		if (Object.keys(delta).length)
-	// 		{
-	// 			// self.onReceivedSyncState(delta);
-	// 			// this if for backward compatibnility with old ChronoChat code
-	// 			// if you don't need this compatibility, use the line above
-	// 			var syncStates = [];
-	// 			for (var key in delta)
-	// 			{
-	// 				 syncStates.push(new ChronoSync2013.SyncState (key, 0, delta[key], new Blob()));
-	// 			}
-	// 			self.onReceivedSyncState(syncStates);
-	// 		}
-	// 		else
-	// 			debug('> firefly-sync: no sync updates');
-	// 	}
-	// }, 
-	// function(err) {
- //    	debug('> firefly-sync: encountered error while getting updates: ${err}');
-	// });
 };
 
 FireflySync.prototype.processNewSyncState = function(doc){
@@ -234,6 +182,7 @@ FireflySync.prototype.publishNextSequenceNo = function(){
 	this.syncData[encodeURIComponent(this.applicationDataPrefixUri)] = this.mySeqNo;
 
 	this.createSyncDoc(this.fullDocName());
+
 	// var lockDocRef = this.firestoreDb.doc(this.lockDocName)
 	// var self = this;
 	// var i = 1;
@@ -265,19 +214,6 @@ FireflySync.prototype.publishNextSequenceNo = function(){
  //    	// debug("> firefly-sync: transaction successfully committed!");
 	// }).catch(function(error) {
  //    	console.error("> firefly-sync: transaction failed: ", error);
-	// });
-
-	// var prefix = encodeURIComponent(this.applicationDataPrefixUri);
-	// var self = this;
-
-	// this.firestoreDb.doc(this.syncDoc).update({
-	// 	[prefix] : self.mySeqNo
-	// })
-	// .then(function(){
-	// 	debug("> firefly-sync: updated sync doc with new seq no ", self.mySeqNo);
-	// })
-	// .catch(function(error){
-	// 	console.error('> firefly-sync: error updating sync doc: ', error);
 	// });
 
 	return this.mySeqNo;
