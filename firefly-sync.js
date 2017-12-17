@@ -17,6 +17,11 @@
  * A copy of the GNU Lesser General Public License is in the file COPYING.
  */
 
+isDebug = false; // toggle this to turn on / off for global controll
+
+if (isDebug) var debug = console.log.bind(window.console);
+else var debug = function(){};
+
 /**
  * FireflySync provides sync mechanism similar to ChronoSync, only backed by Firestore backend.
  * @param {firebase.firestore.Firestore} An initialized Firestore object
@@ -40,11 +45,11 @@ var FireflySync = function FireflySync(firestoreDb, syncDoc, applicationPrefix, 
 	this.firestoreDb.doc(this.syncDoc).onSnapshot(function(snapshot){
 		if (!snapshot.exists)
 		{
-			console.log('> firefly-sync: sync doc does not exist.');
+			debug('> firefly-sync: sync doc does not exist.');
   			// setup empty document
   			self.firestoreDb.doc(self.syncDoc).set({})
   			.then(function(){
-  				console.log('> firefly-sync: new sync doc created');
+  				debug('> firefly-sync: new sync doc created');
   			})
   			.catch(function(error){
   				console.error('> firefly-sync: error creating sync doc: ', error);
@@ -52,7 +57,7 @@ var FireflySync = function FireflySync(firestoreDb, syncDoc, applicationPrefix, 
 		}
 		else
 		{
-			// console.log('> firefly-sync: received doc snapshot: ', snapshot.data());
+			// debug('> firefly-sync: received doc snapshot: ', snapshot.data());
 
 			var delta = {}
 			var syncData = snapshot.data();
@@ -70,11 +75,11 @@ var FireflySync = function FireflySync(firestoreDb, syncDoc, applicationPrefix, 
 			if (Object.keys(delta).length)
 				self.onReceivedSyncState(delta);
 			else
-				console.log('> firefly-sync: no sync updates');
+				debug('> firefly-sync: no sync updates');
 		}
 	}, 
 	function(err) {
-    	console.log('> firefly-sync: encountered error while getting updates: ${err}');
+    	debug('> firefly-sync: encountered error while getting updates: ${err}');
 	});
 };
 
@@ -92,7 +97,7 @@ FireflySync.prototype.publishNextSequenceNo = function(){
 		[prefix] : self.mySeqNo
 	})
 	.then(function(){
-		console.log("> firefly-sync: updated sync doc with new seq no ", self.mySeqNo);
+		debug("> firefly-sync: updated sync doc with new seq no ", self.mySeqNo);
 	})
 	.catch(function(error){
 		console.error('> firefly-sync: error updating sync doc: ', error);
