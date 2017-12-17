@@ -156,11 +156,48 @@ FireflyFace.toFirestorePath = function(name)
  */
 FireflyFace.prototype.setDataPromise_ = function(data, wireFormat)
 {
-  return this.db_.doc(FireflyFace.toFirestorePath(data.getName())).set({
-    data: firebase.firestore.Blob.fromBase64String
-      (data.wireEncode(wireFormat).buf().toString('base64')),
-    storeTime: firebase.firestore.FieldValue.serverTimestamp(),
-    freshnessPeriod: data.getMetaInfo().getFreshnessPeriod()
-  }, { merge: true });
+  return this.establishDocumentPromise_(data.getName())
+  .then(function(document) {
+    return document.set({
+      data: firebase.firestore.Blob.fromBase64String
+        (data.wireEncode(wireFormat).buf().toString('base64')),
+      storeTime: firebase.firestore.FieldValue.serverTimestamp(),
+      freshnessPeriod: data.getMetaInfo().getFreshnessPeriod()
+    }, { merge: true });
+  });
 };
 
+/**
+ * Get the Firestore document for the given name, creating the "children"
+ * documents at each level in the collection tree as needed. For example, if
+ * Firestore has the document /ndn/_/user/_/joe_ and you ask for the document
+ * for the name /ndn/role/doctor this returns the document
+ * /ndn/_/role/_/leader_ and adds { role: null } to /ndn/children and adds
+ * { doctor: null } to /ndn/_/role/children . (We represent the set of children
+ * by an object with the set elements are the key and the value is null.)
+ * @param {Name} name The Name for the document.
+ * @returns {Promise} A promise that returns the
+ * firebase.firestore.DocumentReference .
+ */
+FireflyFace.prototype.establishDocumentPromise_ = function(name)
+{
+  // Update the "children" document of the collection, and recursively call this
+  // with each component until the collection for the final component and return
+  // its "_" document.
+  var establish = function(collection, iComponent) {
+    if (iComponent >= name.size() - 1)
+      // We're finished.
+      return SyncPromise.resolve(collection.doc("_"));
+    else {
+      var childString = name.get(iComponent + 1).toEscapedString();
+      // Update the "children" document.
+      return collection.doc("children").set
+        ({ [childString]: null }, { merge: true })
+      .then(function () {
+        return establish(collection.doc("_").collection(childString), iComponent + 1);
+      });
+    }
+  };
+
+  return establish(this.db_.collection(name.get(0).toEscapedString()), 0);
+};
