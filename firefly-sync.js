@@ -67,13 +67,24 @@ var FireflySync = function FireflySync(firestoreDb, syncDoc, applicationPrefix, 
 				var newValue = !(decodedKey in self.syncData) && decodedKey != self.applicationDataPrefixUri;
 				if (!newValue) newValue = (syncData[key] > self.syncData[decodedKey]);
 				if (newValue) delta[decodedKey] = syncData[key];
+
 				// update our seq no if needed
 				if (decodedKey == self.applicationDataPrefixUri && self.mySeqNo < syncData[key])
 					self.mySeqNo = syncData[key];
+				
+				self.syncData[decodedKey] = syncData[key];
 			}
 
 			if (Object.keys(delta).length)
-				self.onReceivedSyncState(delta);
+			{
+				var syncStates = [];
+				for (var key in delta)
+				{
+					 syncStates.push(new ChronoSync2013.SyncState (key, 0, delta[key], new Blob()));
+				}
+				// self.onReceivedSyncState(delta);
+				self.onReceivedSyncState(syncStates);
+			}
 			else
 				debug('> firefly-sync: no sync updates');
 		}
