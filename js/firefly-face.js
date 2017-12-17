@@ -45,7 +45,12 @@ var FireflyFace = function FireflyFace(db)
   }
 
   this.db_ = db;
+  // The set of Name URIs corresponding to the collections where we have added
+  // a snapshot listener to the "_" and "children" documents. The key is the URI
+  // string and the value is true.
+  this.listeningNameUris_ = {};
   this.pendingInterestTable_ = new PendingInterestTable();
+  this.interestFilterTable_ = new InterestFilterTable();
 };
 
 FireflyFace.prototype = new Face(new Transport(), { equals: function() { return true; } });
@@ -119,11 +124,32 @@ FireflyFace.prototype.nfdRegisterPrefix = function
   (registeredPrefixId, prefix, onInterest, flags, onRegisterFailed,
    onRegisterSuccess, commandKeyChain, commandCertificateName, wireFormat)
 {
+  var thisFace = this;
+
   this.establishDocumentPromise_(prefix)
   .then(function(document) {
     // Monitor this and all sub documents.
 
-    
+    // Imitate Face.RegisterResponse.onData .
+    var interestFilterId = 0;
+    if (onInterest != null)
+      // registerPrefix was called with the "combined" form that includes the
+      // callback, so add an InterestFilterEntry.
+      interestFilterId = thisFace.setInterestFilter
+        (new InterestFilter(prefix), onInterest);
+
+    if (!thisFace.registeredPrefixTable_.add
+        (registeredPrefixId, prefix, interestFilterId)) {
+      // removeRegisteredPrefix was already called with the registeredPrefixId.
+      if (interestFilterId > 0)
+        // Remove the related interest filter we just added.
+        this.parent.unsetInterestFilter(interestFilterId);
+    }
+    else {
+      // TODO: Check onRegisterSuccess.
+      console.log("Debug addListeners_ " + document.parent);
+      thisFace.addListeners_(prefix.toUri(), document.parent);
+    }
   });
 };
 
@@ -189,6 +215,58 @@ FireflyFace.toFirestorePath = function(name)
     result += "/"+ name.components[i].toEscapedString() + "/_";
 
   return result;
+};
+
+FireflyFace.prototype.addListeners_ = function(nameUri, collection)
+{
+  if (this.listeningNameUris_[nameUri])
+    // We are already listening.
+    return;
+
+  this.listeningNameUris_[nameUri] = true;
+  var thisFace = this;
+
+  collection.doc("_").onSnapshot(function(document) {
+    if (!document.exists)
+      return;
+
+    // TODO: Listen for added Data.
+
+    // TODO: A better check if there is already a matching Data.
+    if (document.data().interestExpressTime && !document.data().data) {
+      var interestLifetime = document.data().interestLifetime;
+      // TODO: Check interestLifetime for an expired interest.
+      var interest = new Interest(new Name(nameUri));
+      console.log("Debug found interest " + interest.getName().toUri());
+      interest.setInterestLifetimeMilliseconds(interestLifetime);
+
+      // Imitate Face.onReceivedElement.
+      // Call all interest filter callbacks which match.
+      var matchedFilters = [];
+      thisFace.interestFilterTable_.getMatchedFilters(interest, matchedFilters);
+      for (var i = 0; i < matchedFilters.length; ++i) {
+        var entry = matchedFilters[i];
+        try {
+          entry.getOnInterest()
+            (entry.getFilter().getPrefix(), interest, thisFace,
+             entry.getInterestFilterId(), entry.getFilter());
+        } catch (ex) {
+          console.log("Error in onInterest: " + NdnCommon.getErrorWithStackTrace(ex));
+        }
+      }
+    }
+  });
+
+  collection.doc("children").onSnapshot(function(document) {
+    if (!document.exists)
+      return;
+
+    for (var componentUri in document.data())
+      // This will call onSnapshot and recursively add children.
+      thisFace.addListeners_
+        (nameUri + "/" + componentUri,
+         collection.doc("_").collection(componentUri));
+  });
 };
 
 /**
