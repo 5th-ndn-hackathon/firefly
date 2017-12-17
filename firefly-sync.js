@@ -258,10 +258,13 @@ FireflySync.prototype.getHistoricalSyncStates = function(onSyncStatesFetched) {
 	collRef.get().then(function(snap){
 		var sortedDocs = self.sortedDocs(snap.docs);
 
-		sortedDocs.forEach(function(docSnap, idx, arr){
-			syncStates.push(docSnap.data());
-			if (idx == arr.length-1) onSyncStatesFetched(syncStates);
-		});
+		if (sortedDocs.length)
+			sortedDocs.forEach(function(docSnap, idx, arr){
+				syncStates.push(docSnap.data());
+				if (idx == arr.length-1) onSyncStatesFetched(syncStates);
+			});
+		else
+			onSyncStatesFetched(syncStates);
 	});
 };
 
@@ -272,13 +275,16 @@ FireflySync.prototype.getHistoricalDeltas = function(onDeltasFetched) {
 		var lastSyncState = null
 		var deltas = []
 		
-		syncStates.forEach(function(syncState, idx, arr){
-			if (lastSyncState)
-				deltas.push(self.getSyncStatesDelta(lastSyncState, syncState));
-			else
-				deltas.push(syncState);
-			lastSyncState = syncState
-			if (idx == arr.length-1) onDeltasFetched(deltas);
-		});
+		if (syncStates.length)
+			syncStates.forEach(function(syncState, idx, arr){
+				if (lastSyncState)
+					deltas.push(self.getSyncStatesDelta(lastSyncState, syncState));
+				else
+					deltas.push(syncState);
+				lastSyncState = syncState
+				if (idx == arr.length-1) onDeltasFetched(deltas);
+			});
+		else
+			onDeltasFetched(deltas);
 	});
 }

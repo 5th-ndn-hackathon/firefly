@@ -28,6 +28,7 @@ var ChronoChat = function(screenName, chatRoom, rootPrefix, chat, face, syncDoc,
   this.face = face;
   this.keyChain = keyChain;
   this.certificateName = certificateName;
+  this.fetchedHistorical = false;
 
   this.chat_prefix = (new Name(rootPrefix)).append(this.chatroom)
     .append(screenName);
@@ -118,6 +119,34 @@ ChronoChat.prototype.onRegisterFailed = function(prefix)
 
 ChronoChat.prototype.initial = function()
 {
+  // fetch historical data
+  var self = this;
+
+  this.sync.getHistoricalDeltas(function(deltas){
+    console.log('got historical deltas')
+    if (deltas.length)
+      deltas.forEach(function(delta, idx, arr){
+        for (var key in delta)
+        {
+          var decodedKey = decodeURIComponent(key);
+          var uri = decodedKey+'/0/'+delta[key]; // beware! session number is hardcoded as zero here!!
+          var interest = new Interest(new Name(uri));
+          interest.setInterestLifetimeMilliseconds(self.sync_lifetime);
+      
+          console.log('expressing interest for historical data ', interest.getName().toUri());
+          self.face.expressInterest(interest, self.onData.bind(self), self.chatTimeout.bind(self));
+        }
+  
+        if (idx == arr.length-1)
+        { 
+          self.fetchedHistorical = true;
+          console.log('requested all historical ',self.fetchedHistorical);
+        }
+      });
+    else
+      self.fetchedHistorical = true;
+  });
+
   /*var timeout = new Interest(new Name("/timeout"));
   timeout.setInterestLifetimeMilliseconds(60000);
 
@@ -160,6 +189,14 @@ ChronoChat.prototype.sendInterest = function(syncStates, isRecovery)
 {
   this.isRecoverySyncState = isRecovery;
 
+  // this one is to prevent chronochat from retrieving latest data which
+  // should be fetched as part of initial historical retrieval
+  if (!this.fetchedHistorical) 
+  {
+    console.log('hasnt fetched historical yet ', this.fetchedHistorical);
+    return;
+  }
+
   var sendList = [];       // of String
   var sessionNoList = [];  // of number
   var sequenceNoList = []; // of number
@@ -193,6 +230,8 @@ ChronoChat.prototype.sendInterest = function(syncStates, isRecovery)
     var uri = sendList[i] + "/" + sessionNoList[i] + "/" + sequenceNoList[i];
     var interest = new Interest(new Name(uri));
     interest.setInterestLifetimeMilliseconds(this.sync_lifetime);
+    
+    console.log('expressing interest for data ', interest.getName().toUri());
     this.face.expressInterest(interest, this.onData.bind(this), this.chatTimeout.bind(this));
   }
 };
@@ -209,7 +248,8 @@ ChronoChat.prototype.onData = function(interest, co)
   var content = this.ChatMessage.decode(arr.buffer);
 
   var temp = (new Date()).getTime();
-  if (temp - content.timestamp * 1000 < 120000) {
+  // if (temp - content.timestamp * 1000 < 120000) 
+  {
     var t = (new Date(content.timestamp * 1000)).toLocaleTimeString();
     var name = content.from;
 

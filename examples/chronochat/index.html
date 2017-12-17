@@ -182,6 +182,7 @@ $(document).ready(function(){
   var hubPrefix = document.getElementById('hubPrefix').value;
   var chatroom = document.getElementById('chatroom').value;
   //var hostName = document.getElementById('hub').value;
+  syncDoc.syncId = chatroom;
 
   if (screenName == "" || chatroom == "") {
     alert("input username and chatroom");
