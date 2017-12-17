@@ -17,7 +17,7 @@
  * A copy of the GNU Lesser General Public License is in the file COPYING.
  */
 
-fireflySyncDebug = true; // toggle this to turn on / off for global controll
+fireflySyncDebug = false; // toggle this to turn on / off for global controll
 
 if (fireflySyncDebug) var debug = console.log.bind(window.console);
 else var debug = function(){};
