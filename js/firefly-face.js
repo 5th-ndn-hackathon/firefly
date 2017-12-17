@@ -45,6 +45,7 @@ var FireflyFace = function FireflyFace(db)
   }
 
   this.db_ = db;
+  this.pendingInterestTable_ = new PendingInterestTable();
 };
 
 FireflyFace.prototype = new Face(new Transport(), { equals: function() { return true; } });
@@ -56,15 +57,55 @@ FireflyFace.prototype.name = "FireflyFace";
 FireflyFace.prototype.expressInterestHelper = function
   (pendingInterestId, interest, onData, onTimeout, onNetworkNack, wireFormat)
 {
+  var thisFace = this;
+
   // First check if the Data packet is already in Firestore.
   // TODO: Check MustBeFresh.
   this.getMatchingDataPromise_(interest.getName(), interest.getMustBeFresh())
   .then(function(data) {
-    if (data != null)
+    if (data != null) {
       // Answer onData immediately.
       onData(interest, data);
+      return SyncPromise.resolve();
+    }
     else {
-      // TODO: Insert an interest into Firestore.
+      if (thisFace.pendingInterestTable_.add
+          (pendingInterestId, interest, onData, onTimeout, onNetworkNack) == null)
+        // removePendingInterest was already called with the pendingInterestId.
+        return SyncPromise.resolve();
+
+      // Express an interest in Firestore.
+      return thisFace.establishDocumentPromise_(interest.getName())
+      .then(function(document) {
+        // TODO: Monitor sub collections with a longer name.
+        document.onSnapshot(function(document) {
+          // TODO: Check MustBeFresh.
+          if (document.data().data) {
+            var data = new Data();
+            data.wireDecode(new Blob(document.data().data.toUint8Array(), false));
+
+            // Imitate Face.onReceivedElement.
+            var pendingInterests = [];
+            thisFace.pendingInterestTable_.extractEntriesForExpressedInterest
+              (data, pendingInterests);
+            // Process each matching PIT entry (if any).
+            for (var i = 0; i < pendingInterests.length; ++i) {
+              var pendingInterest = pendingInterests[i];
+              try {
+                pendingInterest.getOnData()(pendingInterest.getInterest(), data);
+              } catch (ex) {
+                console.log("Error in onData: " + NdnCommon.getErrorWithStackTrace(ex));
+              }
+            }
+          }
+        });
+
+        // TODO: Check if an existing interestLifetime has a later expiration.
+        return document.set({
+          interestExpressTime: firebase.firestore.FieldValue.serverTimestamp(),
+          interestLifetime: interest.getInterestLifetimeMilliseconds()
+        }, { merge: true });
+      });
     }
   }).catch(function(error) {
     console.log("Error in expressInterest:", error);
@@ -78,8 +119,12 @@ FireflyFace.prototype.nfdRegisterPrefix = function
   (registeredPrefixId, prefix, onInterest, flags, onRegisterFailed,
    onRegisterSuccess, commandKeyChain, commandCertificateName, wireFormat)
 {
-  console.log("Debug Register prefix");
-  // TODO: Implement.
+  this.establishDocumentPromise_(prefix)
+  .then(function(document) {
+    // Monitor this and all sub documents.
+
+    
+  });
 };
 
 /**
@@ -117,12 +162,13 @@ FireflyFace.prototype.putData = function(data, wireFormat)
 FireflyFace.prototype.getMatchingDataPromise_ = function(name, mustBeFresh)
 {
   // TODO: Check mustBeFresh.
+  // TODO: Do longest prefix match.
   return this.db_.doc(FireflyFace.toFirestorePath(name)).get()
-  .then(function(doc) {
-    if (doc.exists && doc.data().data) {
+  .then(function(document) {
+    if (document.exists && document.data().data) {
       var data = new Data();
       // TODO: Check for decoding error.
-      data.wireDecode(new Blob(doc.data().data.toUint8Array(), false));
+      data.wireDecode(new Blob(document.data().data.toUint8Array(), false));
       return SyncPromise.resolve(data);
     }
     else
