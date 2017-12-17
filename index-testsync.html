@@ -28,7 +28,7 @@ var db = firebase.firestore();
 
 console.log("Firestore loaded.");
 
-var syncDoc = { appName: 'firefly', syncId: 'shackshack'};
+var syncDoc = { appName: 'firefly', syncId: 'fireflychat'};
 
 function makeid() {
   var text = "";
@@ -72,6 +72,10 @@ function loop(){
 }
 
 loop();
+
+sync.getHistoricalDigests(function(digests){
+  console.log('got all digests in chronological order: ', digests);
+});
 
 </script>
 

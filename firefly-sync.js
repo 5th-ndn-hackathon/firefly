@@ -128,6 +128,17 @@ FireflySync.prototype.sorted = function(docChangesArray){
 	});
 }
 
+FireflySync.prototype.sortedDocs = function(docsArray){
+	return docsArray.sort(function(a,b){
+		var aId = parseInt(a.id);
+		var bId = parseInt(b.id);
+		
+		if(aId < bId) return -1;
+    	if(aId > bId) return 1;
+    	return 0;
+	});
+}
+
 FireflySync.prototype.fullDocName = function(){
 	return this.docNameWithoutVersion()+'/'+this.syncDocVersion;
 }
@@ -225,3 +236,31 @@ FireflySync.prototype.publishNextSequenceNo = function(){
 FireflySync.prototype.getSequenceNo = function(){
 	return this.mySeqNo;
 }
+
+FireflySync.prototype.getDigestDelta = function(syncDocOld, syncDocNew) {
+	var delta = {};
+
+	for (var key in syncDocNew)
+	{
+		var newValue = !(key in syncDocOld);
+		if (!newValue) newValue = (syncDocNew[key] > syncDocOld[key]);
+		if (newValue) delta[key] = syncDocNew[key];
+	}
+
+	return delta;
+};
+
+FireflySync.prototype.getHistoricalDigests = function(onDigestsFetched) {
+	var collRef = this.firestoreDb.doc('/sync/'+syncDoc.appName).collection(syncDoc.syncId);
+	var self = this;
+	var digests = [];
+
+	collRef.get().then(function(snap){
+		var sortedDocs = self.sortedDocs(snap.docs);
+
+		sortedDocs.forEach(function(docSnap, idx, arr){
+			digests.push(docSnap.data());
+			if (idx == arr.length-1) onDigestsFetched(digests);
+		});
+	});
+};
