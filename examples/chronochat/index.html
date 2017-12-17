@@ -159,7 +159,7 @@ var config = {
 firebase.initializeApp(config);
 var db = firebase.firestore();
 console.log("Firestore loaded.");
-var syncDoc = "/fireflysync/fireflychat";
+var syncDoc = { appName: 'firefly', syncId: 'fireflychat' };
 var rootPrefix = "/ndn";
 var chat = "/chat";
 

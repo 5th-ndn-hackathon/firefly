@@ -28,7 +28,7 @@ var db = firebase.firestore();
 
 console.log("Firestore loaded.");
 
-var syncDoc = "/fireflysync/fireflychat";
+var syncDoc = { appName: 'firefly', syncId: 'shackshack'};
 
 function makeid() {
   var text = "";
@@ -38,19 +38,26 @@ function makeid() {
     text += possible.charAt(Math.floor(Math.random() * possible.length));
 
   return text;
+  // return 'peter';
 }
 
-var appPrefix = "/ndn/"+makeid()+"/chat/hackathon";
+var userName = makeid();
+console.log('this chat username is ', userName);
 
+var appPrefix = "/ndn/"+userName+"/chat/hackathon";
 var sync = new FireflySync(db,
   syncDoc,
   appPrefix,
+  function(){
+    console.log('sync initialized');
+  },
   function(syncStates){
-    console.log(" > firefly-sync: got new sync states: ", syncStates);
+    console.log("got new sync states: ", syncStates);
   });
 
 // publish new message
 var iter = 0;
+var n = 5;
 
 function loop(){
   setTimeout(function(){
@@ -60,7 +67,7 @@ function loop(){
     console.log("published message ", seqNo);
 
     iter++;
-    if (iter < 5) loop();
+    if (iter < n) loop();
   }, 1000);
 }
 
