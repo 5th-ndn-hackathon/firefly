@@ -222,8 +222,8 @@ ChronoChat.prototype.onData = function(interest, co)
 
     //update roster
     while (l < this.roster.length) {
-      var name_t = this.roster[l].substring(0,this.roster[l].length-10);
-      var session_t = this.roster[l].substring(this.roster[l].length-10,this.roster[l].length);
+      var name_t = this.roster[l].substring(0,this.roster[l].length-1);
+      var session_t = this.roster[l].substring(this.roster[l].length-1,this.roster[l].length);
       if (name != name_t && content.type != 2)
         l++;
       else{
@@ -243,7 +243,7 @@ ChronoChat.prototype.onData = function(interest, co)
       objDiv.scrollTop = objDiv.scrollHeight;
       document.getElementById('menu').innerHTML = '<p><b>Member</b></p><ul>';
       for (var i = 0; i < this.roster.length ; i++) {
-        var name_t = this.roster[i].substring(0,this.roster[i].length - 10);
+        var name_t = this.roster[i].substring(0,this.roster[i].length - 1);
         document.getElementById('menu').innerHTML += '<li>' + name_t + '</li>';
       }
       document.getElementById('menu').innerHTML += '</ul>';
@@ -273,7 +273,7 @@ ChronoChat.prototype.onData = function(interest, co)
         this.roster.splice(n,1);
         document.getElementById('menu').innerHTML = '<p><b>Member</b></p><ul>';
         for(var i = 0; i<this.roster.length; i++) {
-          var name_t = this.roster[i].substring(0,this.roster[i].length - 10);
+          var name_t = this.roster[i].substring(0,this.roster[i].length - 1);
           document.getElementById('menu').innerHTML += '<li>' + name_t + '</li>';
         }
 
