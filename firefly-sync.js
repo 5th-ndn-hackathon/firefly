@@ -17,6 +17,17 @@
  * A copy of the GNU Lesser General Public License is in the file COPYING.
  */
 
+/**
+ * FireflySync provides sync mechanism similar to ChronoSync, only backed by Firestore backend.
+ * @param {firebase.firestore.Firestore} An initialized Firestore object
+ * @param syncDoc 	A string - Firebase document name for synchronization; this 
+ *					document will be created if it does not exist; if it exists, 
+ * 					sequence number will be picked from the storage.
+ * @param applicationPrefix 	Simliar to ChronoSync, this is an application prefix, which 
+ *								client code will use for data publishing.
+ * @param onReceivedSyncState 	A callback (function({'prefix':<seq-no>})) which will be called
+ *								whenever new updates (sequence numbres) are received.
+ */
 var FireflySync = function FireflySync(firestoreDb, syncDoc, applicationPrefix, onReceivedSyncState){
 	this.firestoreDb = firestoreDb;
 	this.onReceivedSyncState = onReceivedSyncState;
@@ -67,6 +78,11 @@ var FireflySync = function FireflySync(firestoreDb, syncDoc, applicationPrefix, 
 	});
 };
 
+/**
+ * Simliar to ChronoSync, this will increment current sequence number and notify all other participants
+ * through updating sync document.
+ * @return New sequence number
+ */
 FireflySync.prototype.publishNextSequenceNo = function(){
 	this.mySeqNo++;
 	var prefix = encodeURIComponent(this.applicationDataPrefixUri);
