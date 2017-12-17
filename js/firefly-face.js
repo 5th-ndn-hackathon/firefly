@@ -147,7 +147,6 @@ FireflyFace.prototype.nfdRegisterPrefix = function
     }
     else {
       // TODO: Check onRegisterSuccess.
-      console.log("Debug addListeners_ " + document.parent);
       thisFace.addListeners_(prefix.toUri(), document.parent);
     }
   });
@@ -237,7 +236,6 @@ FireflyFace.prototype.addListeners_ = function(nameUri, collection)
       var interestLifetime = document.data().interestLifetime;
       // TODO: Check interestLifetime for an expired interest.
       var interest = new Interest(new Name(nameUri));
-      console.log("Debug found interest " + interest.getName().toUri());
       interest.setInterestLifetimeMilliseconds(interestLifetime);
 
       // Imitate Face.onReceivedElement.
