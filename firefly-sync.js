@@ -237,7 +237,7 @@ FireflySync.prototype.getSequenceNo = function(){
 	return this.mySeqNo;
 }
 
-FireflySync.prototype.getDigestDelta = function(syncDocOld, syncDocNew) {
+FireflySync.prototype.getSyncStatesDelta = function(syncDocOld, syncDocNew) {
 	var delta = {};
 
 	for (var key in syncDocNew)
@@ -250,17 +250,35 @@ FireflySync.prototype.getDigestDelta = function(syncDocOld, syncDocNew) {
 	return delta;
 };
 
-FireflySync.prototype.getHistoricalDigests = function(onDigestsFetched) {
+FireflySync.prototype.getHistoricalSyncStates = function(onSyncStatesFetched) {
 	var collRef = this.firestoreDb.doc('/sync/'+syncDoc.appName).collection(syncDoc.syncId);
 	var self = this;
-	var digests = [];
+	var syncStates = [];
 
 	collRef.get().then(function(snap){
 		var sortedDocs = self.sortedDocs(snap.docs);
 
 		sortedDocs.forEach(function(docSnap, idx, arr){
-			digests.push(docSnap.data());
-			if (idx == arr.length-1) onDigestsFetched(digests);
+			syncStates.push(docSnap.data());
+			if (idx == arr.length-1) onSyncStatesFetched(syncStates);
 		});
 	});
 };
+
+FireflySync.prototype.getHistoricalDeltas = function(onDeltasFetched) {
+	var self = this;
+
+	this.getHistoricalSyncStates(function(syncStates){
+		var lastSyncState = null
+		var deltas = []
+		
+		syncStates.forEach(function(syncState, idx, arr){
+			if (lastSyncState)
+				deltas.push(self.getSyncStatesDelta(lastSyncState, syncState));
+			else
+				deltas.push(syncState);
+			lastSyncState = syncState
+			if (idx == arr.length-1) onDeltasFetched(deltas);
+		});
+	});
+}

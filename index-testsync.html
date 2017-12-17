@@ -73,8 +73,12 @@ function loop(){
 
 loop();
 
-sync.getHistoricalDigests(function(digests){
-  console.log('got all digests in chronological order: ', digests);
+sync.getHistoricalSyncStates(function(syncStates){
+  console.log('got all sync states in chronological order: ', syncStates);
+});
+
+sync.getHistoricalDeltas(function(syncDeltas){
+  console.log('got all sync deltas: ', syncDeltas);
 });
 
 </script>
